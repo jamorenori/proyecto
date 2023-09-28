@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>VVPP CM</title>
+  <title>PRYECTO FINAL CM</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -21,32 +21,136 @@
 <body>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-layers-toggle@0.1.0/dist/leaflet-control-layers-toggle.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script>
     // Configurar el mapa
     var map = L.map('map').setView([41.500, -5.750], 8);
 
-    // Agregar la capa base de OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    // Agregar la capa de GeoServer
+    // Agregar la capa de GeoServer (VVPP)
     var postgisLayer = L.tileLayer.wms('http://localhost:8080/geoserver/PROYECTO/wms', {
-      layers: 'PROYECTO:Capa_global_nueva_USO_INTERNO',
+  layers: 'PROYECTO:Capa_global_nueva_USO_INTERNO',
+  format: 'image/png',
+  transparent: true,
+  attribution: 'Capa de GeoServer',
+  crs: L.CRS.EPSG25830,
+  onEachFeature: function (feature, layer) {
+    layer.on('click', function (e) {
+      var popupContent = "Nombre: " + feature.properties.nombre + "<br>Descripción: " + feature.properties.descripcion;
+      var popup = L.popup()
+        .setLatLng(e.latlng)
+        .setContent(popupContent)
+        .openOn(map);
+    });
+  }
+});
+
+
+
+
+
+    var postgisLayer_2 = L.tileLayer.wms('http://localhost:8080/geoserver/PROYECTO/wms', {
+      layers: 'PROYECTO:arco_verde',
       format: 'image/png',
       transparent: true,
       attribution: 'Capa de GeoServer',
       crs: L.CRS.EPSG25830
-    }).addTo(map);
+    });
 
-    // Agregar el buscador al mapa
+    var postgisLayer_3 = L.tileLayer.wms('http://localhost:8080/geoserver/PROYECTO/wms', {
+      layers: 'PROYECTO:camino_santiago',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Capa de GeoServer',
+      crs: L.CRS.EPSG25830
+    });
+
+    var postgisLayer_4 = L.tileLayer.wms('http://localhost:8080/geoserver/PROYECTO/wms', {
+      layers: 'PROYECTO:cicla_madrid',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Capa de GeoServer',
+      crs: L.CRS.EPSG25830
+    });
+
+    var postgisLayer_5 = L.tileLayer.wms('http://localhost:8080/geoserver/PROYECTO/wms', {
+      layers: 'PROYECTO:gr_10',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Capa de GeoServer',
+      crs: L.CRS.EPSG25830
+    });
+
+    var postgisLayer_6 = L.tileLayer.wms('http://localhost:8080/geoserver/PROYECTO/wms', {
+      layers: 'PROYECTO:rutas_enp',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Capa de GeoServer',
+      crs: L.CRS.EPSG25830
+    });
+
+    var postgisLayer_7 = L.tileLayer.wms('http://localhost:8080/geoserver/PROYECTO/wms', {
+      layers: 'PROYECTO:sendas_verdes_madrid',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Capa de GeoServer',
+      crs: L.CRS.EPSG25830
+    });
+     
+
+    // Agregar la capa base de Google Maps (Imagen Satélite)
+    var googleSatelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '© Google Satellite'
+    });
+
+    // Agregar la capa base de OpenStreetMap
+    var openStreetMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    });
+
+    // Crear un objeto de capas base
+    var baseMaps = {
+      "OpenStreetMap": openStreetMapLayer,
+      "Google Satellite": googleSatelliteLayer
+    };
+
+    // Crear un objeto de capas superpuestas
+    var overlayLayers = {
+      "Vías Pecuarias": postgisLayer,
+      "Arco Verde": postgisLayer_2,
+      "Camino de Santiago": postgisLayer_3,
+      "Cicla Madrid": postgisLayer_4,
+      "Rutas de gran recorrido": postgisLayer_5,
+      "Rutas ENP": postgisLayer_6,
+      "Sendas verdes CM": postgisLayer_7
+    };
+
+    // Agregar capas de manera predeterminada (VVPP y OpenStreetMap)
+    postgisLayer.addTo(map);
+    openStreetMapLayer.addTo(map);
+
+    // Agregar control de capas base y capas superpuestas al mapa
+    L.control.layers(baseMaps, overlayLayers).addTo(map);
+
+    // Agregar el geocodificador al mapa
     var geocoder = L.Control.geocoder().addTo(map);
 
     // Agregar el buscador en la esquina superior derecha del mapa
     var searchControl = L.control({position: 'topright'});
     searchControl.addTo(map);
+
+    // Agregar control para marcar y desmarcar todas las capas
+    L.easyButton('<span class="star">&#9733;</span>', function(){
+      for (var layer in overlayLayers) {
+        if (map.hasLayer(overlayLayers[layer])) {
+          map.removeLayer(overlayLayers[layer]);
+        } else {
+          map.addLayer(overlayLayers[layer]);
+        }
+      }
+    }).addTo(map);
   </script>
 </body>
 </html>
-
-
-
